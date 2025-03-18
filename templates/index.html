@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Port Scanner</h1>
+
+        <!-- Authentication Form -->
+        <div id="auth-section">
+            <h2>Authenticate</h2>
+            <form id="auth-form">
+                <input type="text" id="username" name="username" placeholder="Username" required>
+                <input type="password" id="key" name="key" placeholder="Key" required>
+                <button type="submit">Authenticate</button>
+            </form>
+            <p id="auth-message"></p>
+        </div>
+
+        <!-- Scan Form (Hidden until authenticated) -->
+        <div id="scan-section" class="hidden">
+            <h2>Scan Ports</h2>
+            <form id="scan-form">
+                <input type="text" id="target" name="target" placeholder="Target (e.g., example.com)" required>
+                <input type="number" id="start_port" name="start_port" placeholder="Start Port" min="1" required>
+                <input type="number" id="end_port" name="end_port" placeholder="End Port" min="1" required>
+                <button type="submit">Start Scan</button>
+                <button type="button" id="stop-btn" class="hidden">Stop Scan</button>
+            </form>
+            <div id="results">
+                <h3>Results</h3>
+                <ul id="result-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authenticated = false;
+
+        // Authentication Form Submission
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const key = document.getElementById('key').value;
+
+            const response = await fetch('/authenticate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `username=${username}&key=${key}`
+            });
+            const data = await response.json();
+
+            const authMessage = document.getElementById('auth-message');
+            if (data.success) {
+                authenticated = true;
+                authMessage.textContent = 'Authentication successful!';
+                authMessage.style.color = 'green';
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('scan-section').classList.remove('hidden');
+            } else {
+                authMessage.textContent = data.message;
+                authMessage.style.color = 'red';
+            }
+        });
+
+        // Scan Form Submission
+        document.getElementById('scan-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!authenticated) return;
+
+            const target = document.getElementById('target').value;
+            const startPort = document.getElementById('start_port').value;
+            const endPort = document.getElementById('end_port').value;
+
+            const response = await fetch('/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `target=${target}&start_port=${startPort}&end_port=${endPort}`
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('stop-btn').classList.remove('hidden');
+                pollResults();
+            } else {
+                alert(data.error);
+            }
+        });
+
+        // Stop Scan Button
+        document.getElementById('stop-btn').addEventListener('click', async () => {
+            await fetch('/stop', { method: 'POST' });
+            document.getElementById('stop-btn').classList.add('hidden');
+        });
+
+        // Poll for Results
+        async function pollResults() {
+            const resultList = document.getElementById('result-list');
+            const response = await fetch('/results');
+            const data = await response.json();
+
+            data.results.forEach(result => {
+                const li = document.createElement('li');
+                li.textContent = result;
+                resultList.appendChild(li);
+            });
+
+            if (data.scanning) {
+                setTimeout(pollResults, 1000); // Poll every 1 second
+            } else {
+                document.getElementById('stop-btn').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
