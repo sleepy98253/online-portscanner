@@ -1,0 +1,1 @@
+in cmd cd into the folder with all the files, the write (python app.py and it will start flask copy the local host ip addres and put it into your browser of choise defauld pass is 1234, and usr is skibi
