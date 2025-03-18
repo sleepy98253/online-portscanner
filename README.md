@@ -1,1 +1,13 @@
-in cmd cd into the folder with all the files, the write (python app.py and it will start flask copy the local host ip addres and put it into your browser of choise defauld pass is 1234, and usr is skibi
+in cmd 
+
+first cd where ever you saved it say downloads,desktop eg
+
+cd online-portscanner-main
+
+cd online-portscanner-main
+
+then python app.py 
+
+go to your webbrowser put in either of the links it gives u
+ and default pass is 1234 default usr is skibi
+
